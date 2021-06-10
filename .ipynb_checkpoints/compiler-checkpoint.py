@@ -11,11 +11,15 @@ import mkwc_util as mkwc
 import numpy as np
 import pandas as pd
 
+# All data types that can be compiled by this package
 accept_labels = ['cfht', 'mass', 'dimm', 'masspro', 'k2AO', 'k2L4', 'k2ENV', 'telem']
 
+# Shorthand / nicknames for data types
 expand = {
     'temp': ['k2AO', 'k2L4', 'k2ENV'],
     'seeing': ['mass', 'dimm', 'masspro'],
+    'weather': ['cfht'],
+    'telemetry': ['telem'],
     'all': accept_labels,
 }
 

@@ -11,13 +11,11 @@ import time_util as times
 ### CFHT data is STORED by HST, with data in HST
 
 # cfht_dir = "/u/emily_ramey/work/Keck_Performance/data/weather_data/"
-cfht_dir = './'
 mkwc_url = 'http://mkwc.ifa.hawaii.edu/'
 year_url = mkwc_url+'archive/wx/cfht/cfht-wx.{}.dat'
 cfht_cutoff = 55927.41666667 # 01/01/2012 12:00 am HST
 
 # seeing_dir = "/u/emily_ramey/work/Keck_Performance/data/seeing_data"
-seeing_dir = './'
 
 # Time columns from MKWC data
 time_cols = ['year', 'month', 'day', 'hour', 'minute', 'second']
@@ -26,23 +24,23 @@ time_cols = ['year', 'month', 'day', 'hour', 'minute', 'second']
 data_types = {
     'cfht': {
         'web_pat': mkwc_url+'archive/wx/cfht/indiv-days/cfht-wx.{}.dat',
-        'file_pat': cfht_dir+"cfht-wx.{}.dat",
+        'file_pat': "{}cfht-wx.{}.dat",
         'data_cols': ['wind_speed', 'wind_direction', 'temperature',
                  'relative_humidity', 'pressure'],
     },
     'mass': {
         'web_pat': mkwc_url+'current/seeing/mass/{}.mass.dat',
-        'file_pat': seeing_dir+'mass/{}.mass.dat',
+        'file_pat': '{}mass/{}.mass.dat',
         'data_cols': ['mass'],
     },
     'dimm': {
         'web_pat': mkwc_url+'current/seeing/dimm/{}.dimm.dat',
-        'file_pat': seeing_dir+'dimm/{}.dimm.dat',
+        'file_pat': '{}dimm/{}.dimm.dat',
         'data_cols': ['dimm'],
     },
     'masspro': {
         'web_pat': mkwc_url+'current/seeing/masspro/{}.masspro.dat',
-        'file_pat': seeing_dir+'masspro/{}.masspro.dat',
+        'file_pat': '{}masspro/{}.masspro.dat',
         'data_cols': ['masspro_half', 'masspro_1', 'masspro_2', 
                       'masspro_4', 'masspro_8', 'masspro_16', 'masspro'],
     },
@@ -105,7 +103,7 @@ def format_columns(df, dtype):
     df.drop(columns=time_cols, inplace=True, errors='ignore')
 
 def from_url(datestring, dtype):
-    """ Pulls cfht file from MKWC website """
+    """ Pulls cfht or seeing file from MKWC website """
     # Format URL
     url = data_types[dtype]['web_pat'].format(datestring)
     
@@ -122,7 +120,7 @@ def from_url(datestring, dtype):
     
     return df
 
-def from_file(filename, dtype):
+def from_file(filename, dtype, data_dir='./'):
     """ Pulls cfht or seeing file from local directory """
     # Read in CSV
     df = pd.read_csv(filename)
@@ -138,7 +136,7 @@ def from_file(filename, dtype):
     
     return df
 
-def from_nirc2(mjds, dtype):
+def from_nirc2(mjds, dtype, data_dir='./'):
     """ 
     Compiles a list of cfht or seeing observations based on MJDs
     note: does not compare MJDs; assumption is inputs are rounded to nearest day
@@ -168,7 +166,7 @@ def from_nirc2(mjds, dtype):
     # Find data for each file
     for ds in datestrings:
         # Get local filename
-        filename = data_types[dtype]['file_pat'].format(ds)
+        filename = data_types[dtype]['file_pat'].format(data_dir, ds)
         
         # Check for local files
         if os.path.isfile(filename):

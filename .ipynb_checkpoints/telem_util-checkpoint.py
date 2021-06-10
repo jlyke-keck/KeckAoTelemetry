@@ -13,7 +13,7 @@ import time_util as times
 telem_dir = '/g/lu/data/keck_telemetry/'
 
 # Sub-aperture maps
-map_dir = "../ao_telemetry/"
+map_dir = "./"
 wfs_file = map_dir+"sub_ap_map.txt"
 act_file = map_dir+"act.txt"
 
