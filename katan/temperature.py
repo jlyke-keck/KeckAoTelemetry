@@ -10,7 +10,7 @@ import glob
 from astropy.io import fits
 from astropy.table import Table
 
-import time_util as times
+from . import times
 
 verbose = True
 

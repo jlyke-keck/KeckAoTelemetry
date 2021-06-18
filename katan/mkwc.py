@@ -5,7 +5,7 @@
 import os
 import numpy as np
 import pandas as pd
-import time_util as times
+from . import times
 
 ### NOTE: Seeing data is STORED by UT, with data in HST
 ### CFHT data is STORED by HST, with data in HST

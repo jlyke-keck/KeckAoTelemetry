@@ -7,15 +7,23 @@ import pandas as pd
 import glob
 from scipy.io import readsav
 
-import time_util as times
+from . import times
+from . import templates
+
+### For importing package files
+### May need to edit this later if there are import issues with Py<37
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as pkg_resources
 
 ### Path to telemetry files [EDIT THIS]
 telem_dir = '/g/lu/data/keck_telemetry/'
 
 # Sub-aperture maps
-map_dir = "./"
-wfs_file = map_dir+"sub_ap_map.txt"
-act_file = map_dir+"act.txt"
+wfs_file = "sub_ap_map.txt"
+act_file = "act.txt"
 
 filenum_match = ".*c(\d+).fits" # regex to match telem filenumbers
 filename_match = telem_dir+"{}/**/n?{}*LGS*.sav"
@@ -39,7 +47,8 @@ cols = ['telem_file',
 
 def read_map(filename):
     """ Reads a map of actuators or sub-apertures from a file """
-    return pd.read_csv(filename, delim_whitespace=True, header=None).to_numpy()
+    file = pkg_resources.open_text(templates, filename)
+    return pd.read_csv(file, delim_whitespace=True, header=None).to_numpy()
 
 def get_times(telem_data, start=None):
     """ Pulls timestamps from a telemetry file in seconds from start """
@@ -206,7 +215,7 @@ def get_mjd(telem):
     # Convert to MJD
     telem_mjd = times.str_to_mjd(tstamp, fmt='isot')
     
-    # Return telem mjd if they match, else return False
+    # Returns telem mjd
     return telem_mjd
 
 def extract_telem(file, data, idx, check_mjd=None):

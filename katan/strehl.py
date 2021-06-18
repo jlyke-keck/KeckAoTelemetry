@@ -8,40 +8,13 @@ import pandas as pd
 import glob
 from astropy.io import fits
 
-import time_util as times
+from . import times
 
-MAX_LEN = 10 # Max char length of epoch name
-
-nirc2_dir = "/g/lu/data/gc/lgs_data/"
-strehl_pat = nirc2_dir+"{}/clean/kp/{}"
-
-strehl_filenames = ['strehl_source.txt', 'irs33N.strehl']
 strehl_cols = ['nirc2_file', 'strehl', 'rms_err', 'fwhm', 'nirc2_mjd']
-header_kws = ['AIRMASS', 'ITIME', 'COADDS', 'FWINAME', 'AZ', 'DMGAIN', 'DTGAIN',
+default_keys = ['AIRMASS', 'ITIME', 'COADDS', 'FWINAME', 'AZ', 'DMGAIN', 'DTGAIN',
               'AOLBFWHM', 'WSFRRT', 'LSAMPPWR', 'LGRMSWF', 'AOAOAMED', 'TUBETEMP']
 
-# Note: need to get better at identifying which strehl files we want
-# Alternatively, we could have people provide a list
-def search_epochs(data_dir=nirc2_dir):
-    """ Searches for valid epoch names in NIRC2 data directory """
-    # Epochs with valid strehl files
-    good_files = {}
-    # Loop through all sub-directories
-    for epoch in os.listdir(data_dir):
-#         # Only valid if {yr}{month}lgs
-#         if len(epoch) >= MAX_LEN:
-#             continue
-        
-        # Search epoch for valid strehl file
-        for file in strehl_filenames:
-            strehl_file = strehl_pat.format(epoch, file)
-            # If good, add to dict
-            if os.path.isfile(strehl_file):
-                good_files[epoch] = strehl_file
-    # Returns {epoch:strehl} dict
-    return good_files
-
-def from_filename(nirc2_file, data, i):
+def from_filename(nirc2_file, data, i, header_kws):
     """ 
     Gets nirc2 header values from a filename as dict 
     or loads values into specified df
@@ -58,7 +31,7 @@ def from_filename(nirc2_file, data, i):
         # load DataFrame value
         data.loc[i,kw.lower()] = nirc2_hdr.get(kw, np.nan)
 
-def from_strehl(strehl_file):
+def from_strehl(strehl_file, header_kws=default_keys):
     """ Gets NIRC2 header data based on contents of Strehl file """
     # Get directory name
     data_dir = os.path.dirname(strehl_file)
@@ -78,7 +51,7 @@ def from_strehl(strehl_file):
     # Loop through nirc2 files
     for i,nirc2_file in enumerate(strehl_data.nirc2_file):
         # Load header data into df
-        from_filename(nirc2_file, strehl_data, i)
+        from_filename(nirc2_file, strehl_data, i, header_kws)
     
     # Return data
     return strehl_data
