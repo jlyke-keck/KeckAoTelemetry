@@ -28,7 +28,7 @@ nirc2:
     'TUBETEMP': 'tubetemp'
 
 ### Telemetry file columns
-telemetry:
+telem:
     'telem_file': True
     'telem_mjd': True # required
     'TT_mean': True
@@ -73,55 +73,55 @@ masspro:
 k2AO:
     'k2AO_mjd': True # required
     'AOA_camT': True
-    'DM_rackT': True
-    'El_roomT': True
-    'KCAM_T1': True
-    'KCAM_T2': True
-    'OB_leftT': True
-    'OB_rightT': True
+    'DM_rackT': False
+    'El_roomT': False
+    'KCAM_T1': False
+    'KCAM_T2': False
+    'OB_leftT': "k2ao_nirc2_temp"
+    'OB_rightT': "k2ao_wfs_temp"
     'photometricT': True
 
 ### k2L4 temperature columns
 k2L4:
     'k2L4_mjd': True # required
-    'LGS_enclosure_hum': True
+    'LGS_enclosure_hum': False
     'LGS_enclosure_temp': True
-    'LGS_humidity': True
+    'LGS_humidity': False
     'LGS_temp': True
 
 ### k2ENV temperature columns
 k2ENV:
     'k2ENV_mjd': True # required
-    'k0:met:dewpointMax': True
-    'k0:met:dewpointMin': True
-    'k0:met:dewpointRaw': True
-    'k0:met:humidityRaw': True
-    'k0:met:humidityStats': True
-    'k0:met:out:windDirection': True
-    'k0:met:out:windDirectionMax': True
-    'k0:met:out:windDirectionMin': True
-    'k0:met:out:windSpeedMaxStats': True
-    'k0:met:out:windSpeedMaxmph': True
-    'k0:met:out:windSpeedmph': True
-    'k0:met:outTempDwptDiff': True
-    'k0:met:pressureRaw': True
-    'k0:met:pressureStats': True
-    'k0:met:tempMax': True
-    'k0:met:tempMin': True
-    'k0:met:tempRaw': True
-    'k2:dcs:sec:acsDwptDiff': True
-    'k2:dcs:sec:acsTemp': True
-    'k2:dcs:sec:secDwptDiff': True
-    'k2:dcs:sec:secondaryTemp': True
-    'k2:met:humidityRaw': True
-    'k2:met:humidityStats': True
-    'k2:met:tempRaw': True
-    'k2:met:tempStats': True
-    'k2:met:windAzRaw': True
-    'k2:met:windElRaw': True
-    'k2:met:windSpeedMaxmph': True
-    'k2:met:windSpeedMinmph': True
-    'k2:met:windSpeedRaw': True
-    'k2:met:windSpeedStats': True
-    'k2:met:windSpeedmph': True
+    'k0:met:dewpointMax': False
+    'k0:met:dewpointMin': False
+    'k0:met:dewpointRaw': False
+    'k0:met:humidityRaw': "k0_humidity"
+    'k0:met:humidityStats': False
+    'k0:met:out:windDirection': "k0_wind_dir"
+    'k0:met:out:windDirectionMax': False
+    'k0:met:out:windDirectionMin': False
+    'k0:met:out:windSpeedMaxStats': False
+    'k0:met:out:windSpeedMaxmph': False
+    'k0:met:out:windSpeedmph': "k0_wind_speed"
+    'k0:met:outTempDwptDiff': False
+    'k0:met:pressureRaw': "k0_pressure"
+    'k0:met:pressureStats': False
+    'k0:met:tempMax': False
+    'k0:met:tempMin': False
+    'k0:met:tempRaw': "k0_temperature"
+    'k2:dcs:sec:acsDwptDiff': False
+    'k2:dcs:sec:acsTemp': "k2_primary_temp"
+    'k2:dcs:sec:secDwptDiff': False
+    'k2:dcs:sec:secondaryTemp': "k2_secondary_temp"
+    'k2:met:humidityRaw': "k2_dome_humidity"
+    'k2:met:humidityStats': False
+    'k2:met:tempRaw': "k2_dome_temp"
+    'k2:met:tempStats': False
+    'k2:met:windAzRaw': False
+    'k2:met:windElRaw': False
+    'k2:met:windSpeedMaxmph': False
+    'k2:met:windSpeedMinmph': False
+    'k2:met:windSpeedRaw': False # investigate
+    'k2:met:windSpeedStats': False
+    'k2:met:windSpeedmph': False
 ...

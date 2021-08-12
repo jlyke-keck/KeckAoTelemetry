@@ -82,6 +82,22 @@ def data_func(dtype):
     if dtype=='telem': # Telemetry
         return lambda files,mjds: telem.from_nirc2(mjds,files), False
 
+def change_cols(data, params):
+    """
+    Changes / filters columns according to the parameters passed.
+    A False entry means the column will be omitted
+    A True entry means the column will be included as-is
+    A string entry means the column will be re-named
+    """
+    # Drop bad columns first
+    bad_cols = [col for col,val in params.items() if not val]
+    data = data.drop(bad_cols, errors='ignore')
+    
+    # Re-map column names
+    col_mapper = {col: new_col for col,new_col in params.items() if isinstance(new_col, str)}
+    data.rename(columns=col_mapper, inplace=True)
+    
+    return data
 
 ################################
 ###### Compiler Functions ######
@@ -142,6 +158,9 @@ def combine_strehl(strehl_file, data_types, file_paths=False, check=True, test=F
         get_data, match = data_func(dtype) # Data retrieval function
         # Get other data from strehl info
         other_data = get_data(nirc2_data.nirc2_file, nirc2_data.nirc2_mjd)
+        
+        # Change or omit selected columns
+        change_cols(other_data, params[dtype])
         
         if match: # Needs to be matched
             if other_data.empty: # No data found
