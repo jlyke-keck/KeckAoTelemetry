@@ -90,14 +90,14 @@ def change_cols(data, params):
     A string entry means the column will be re-named
     """
     # Drop bad columns first
-    bad_cols = [col for col,val in params.items() if not val]
-    data = data.drop(bad_cols, errors='ignore')
+    good_cols = [col for col,val in params.items() if (val and col in data.columns)]
+    new_data = data[good_cols].copy()
     
     # Re-map column names
     col_mapper = {col: new_col for col,new_col in params.items() if isinstance(new_col, str)}
-    data.rename(columns=col_mapper, inplace=True)
+    new_data.rename(columns=col_mapper, inplace=True)
     
-    return data
+    return new_data
 
 ################################
 ###### Compiler Functions ######
@@ -160,7 +160,7 @@ def combine_strehl(strehl_file, data_types, file_paths=False, check=True, test=F
         other_data = get_data(nirc2_data.nirc2_file, nirc2_data.nirc2_mjd)
         
         # Change or omit selected columns
-        change_cols(other_data, params[dtype])
+        other_data = change_cols(other_data, params[dtype])
         
         if match: # Needs to be matched
             if other_data.empty: # No data found
