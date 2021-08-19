@@ -20,7 +20,7 @@ except:
     raise ValueError("PyYAML not installed. Please install from https://anaconda.org/anaconda/pyyaml")
 
 ### For importing package files
-### May need to edit this later if there are import issues with Py<37
+### Note: may need to edit this later if there are import issues with Py<37
 try:
     import importlib.resources as pkg_resources
 except ImportError:
@@ -32,13 +32,30 @@ accept_labels = ['cfht', 'mass', 'dimm', 'masspro', 'k2AO', 'k2L4', 'k2ENV', 'te
 
 default_parfile = 'keyword_defaults.yaml'
 
-### Load default parameter file
-try: # Load from templates module
-    file = pkg_resources.open_text(templates, default_parfile)
-    default_params = yaml.load(file, Loader=yaml.FullLoader)
-except: # Warn user
-    default_params = {}
-    print("WARNING: Unable to load default parameters. Please specify a parameter file when compiling.")
+def load_default_parfile():
+    """ Loads default parameter file and returns a dictionary """
+    try: # Load from templates module
+        file = pkg_resources.open_text(templates, default_parfile)
+        default_params = yaml.load(file, Loader=yaml.FullLoader)
+    except: # Raise error and request param file
+        raise ValueError("Unable to load default parameters. Please specify a parameter file.")
+    
+    return default_params
+
+def read_params(param_file):
+    """ Reads parameters from the specified file or returns default parameters """
+    if param_file is None: # load default
+        params = load_default_parfile()
+    elif isinstance(param_file, str) and os.path.exists(param_file): # Load user-specified
+        try:
+            params = yaml.load(param_file, Loader=yaml.FullLoader)
+        except: # Unable to load
+            raise ValueError(f"Failed to load {param_file}. Please check that PyYAML is installed \
+            and that the file is formatted correctly.")
+    else: # Invalid input
+        raise ValueError(f"{param_file} is not a valid parameter file.")
+    
+    return params
 
 # Shorthand / nicknames for data types
 expand = {
@@ -130,25 +147,29 @@ def match_data(mjd1, mjd2):
 # 'temp' or 'seeing' will be expanded to ['k2AO', 'k2L4', 'k2ENV'] and 
 # ['mass', 'dimm', 'masspro'], respectively
 def combine_strehl(strehl_file, data_types, file_paths=False, check=True, test=False,
-                   params=default_params):
+                   param_file=None):
     """ 
     Combines and matches data from a certain Strehl file with other specified data types.
     NIRC2 files must be in the same directory as the Strehl file.
     """
-    # Check file paths parameter & open if yaml
+    ### Check file paths parameter dict, load if yaml
     if not isinstance(file_paths, dict) and os.path.isfile(file_paths):
         with open(file_paths) as file:
             file_paths = yaml.load(file, loader=yaml.FullLoader)
-    ### Add a catch for YAML not being installed if file specified
+    ### Add a catch for YAML not being installed if file specified?
     
-    # Read in Strehl file
+    ### Sanitize data types
+    if check:
+        data_types = check_dtypes(data_types)
+    
+    ### Read parameter file
+    params = read_params(param_file)
+    
+    ### Read in Strehl file
     nirc2_data = strehl.from_strehl(strehl_file)
     
-    if test: # Take first few files
+    if test: # Take only first few files
         nirc2_data = nirc2_data.loc[:3]
-    
-    if check: # Sanitize user input
-        data_types = check_dtypes(data_types)
     
     # Full data container
     all_data = [nirc2_data.reset_index(drop=True)]
