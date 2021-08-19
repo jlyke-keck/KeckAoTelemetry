@@ -47,8 +47,9 @@ def read_params(param_file):
     if param_file is None: # load default
         params = load_default_parfile()
     elif isinstance(param_file, str) and os.path.exists(param_file): # Load user-specified
-        try:
-            params = yaml.load(param_file, Loader=yaml.FullLoader)
+        try: # Open stream and read as YAML
+            with open(param_file, 'r') as stream:
+                params = yaml.load(stream, Loader=yaml.FullLoader)
         except: # Unable to load
             raise ValueError(f"Failed to load {param_file}. Please check that PyYAML is installed \
             and that the file is formatted correctly.")
@@ -67,16 +68,24 @@ expand = {
 }
 
 # Utility functions
-def check_dtypes(data_types):
+def check_dtypes(data_types, file_paths):
     """ Returns an expanded / cleaned list of data types from user input """
     new_dtypes = []
-    # Check requested data
+    
+    # Edge case: only temperature dir specified
+    if 'temp' in file_paths and os.path.isdir(file_paths['temp']):
+        file_paths['k2AO'] = file_paths['temp']+'k2AOtemps/'
+        file_paths['k2L4'] = file_paths['temp']+'k2L4temps/'
+        file_paths['k2ENV'] = file_paths['temp']+'k2envMet/'
+    
+    # Check requested data types
     for dtype in data_types:
         # Check for nicknames
         if dtype in expand:
             new_dtypes.extend(expand[dtype])
         elif dtype in accept_labels: # can get data
             new_dtypes.append(dtype)
+    
     # Return cleaned list
     return new_dtypes
 
@@ -87,17 +96,17 @@ def check_dtypes(data_types):
 # Have files with acceptable columns for each data type so you can check inputs
 # Accept column inputs to the data function and take optional arguments in combine_strehl
 
-def data_func(dtype):
+def data_func(dtype, data_dir=None):
     """ 
     Returns the function to get data for the specified dtype 
     and whether data needs to be matched to nirc2 mjds
     """
     if dtype in ['cfht']+expand['seeing']: # MKWC
-        return lambda files,mjds: mkwc.from_nirc2(mjds,dtype), True
+        return lambda files,mjds: mkwc.from_nirc2(mjds, dtype, data_dir), True
     if dtype in expand['temp']: # Temperature
-        return lambda files,mjds: temp.from_mjds(mjds,dtype), True
+        return lambda files,mjds: temp.from_mjds(mjds, dtype, data_dir), True
     if dtype=='telem': # Telemetry
-        return lambda files,mjds: telem.from_nirc2(mjds,files), False
+        return lambda files,mjds: telem.from_nirc2(mjds, files, data_dir), False
 
 def change_cols(data, params):
     """
@@ -146,7 +155,7 @@ def match_data(mjd1, mjd2):
 # 'telem', 'k2AO', 'k2L4', or 'k2ENV'
 # 'temp' or 'seeing' will be expanded to ['k2AO', 'k2L4', 'k2ENV'] and 
 # ['mass', 'dimm', 'masspro'], respectively
-def combine_strehl(strehl_file, data_types, file_paths=False, check=True, test=False,
+def combine_strehl(strehl_file, data_types, file_paths={}, test=False,
                    param_file=None):
     """ 
     Combines and matches data from a certain Strehl file with other specified data types.
@@ -156,13 +165,16 @@ def combine_strehl(strehl_file, data_types, file_paths=False, check=True, test=F
     if not isinstance(file_paths, dict) and os.path.isfile(file_paths):
         with open(file_paths) as file:
             file_paths = yaml.load(file, loader=yaml.FullLoader)
-    ### Add a catch for YAML not being installed if file specified?
+    # Check file paths are valid
+    for dtype, data_dir in file_paths.items():
+        if not os.path.isdir(data_dir):
+            raise ValueError((f"The path specified for {dtype} data ({data_dir}) " 
+                                "is not a valid directory."))
     
     ### Sanitize data types
-    if check:
-        data_types = check_dtypes(data_types)
+    data_types = check_dtypes(data_types, file_paths)
     
-    ### Read parameter file
+    ### Read in parameter file
     params = read_params(param_file)
     
     ### Read in Strehl file
@@ -176,7 +188,10 @@ def combine_strehl(strehl_file, data_types, file_paths=False, check=True, test=F
     
     # Loop through and get data
     for dtype in data_types:
-        get_data, match = data_func(dtype) # Data retrieval function
+        # Get data directory
+        data_dir = file_paths[dtype] if dtype in file_paths else None
+        # Fetch data function from dictionary
+        get_data, match = data_func(dtype, data_dir) # Data retrieval function
         # Get other data from strehl info
         other_data = get_data(nirc2_data.nirc2_file, nirc2_data.nirc2_mjd)
         

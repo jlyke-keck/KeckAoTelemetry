@@ -19,14 +19,14 @@ except ImportError:
     import importlib_resources as pkg_resources
 
 ### Path to telemetry files [EDIT THIS]
-telem_dir = '/g/lu/data/keck_telemetry/'
+# telem_dir = '/g/lu/data/keck_telemetry/'
 
 # Sub-aperture maps
 wfs_file = "sub_ap_map.txt"
 act_file = "act.txt"
 
 filenum_match = ".*c(\d+).fits" # regex to match telem filenumbers
-filename_match = telem_dir+"{}/**/n?{}*LGS*.sav"
+filename_match = "{}{}/**/n?{}*LGS*.sav"
 
 TIME_DELTA = 0.001 # About 100 seconds in mjd
 
@@ -261,11 +261,11 @@ def extract_telem(file, data, idx, check_mjd=None):
     
     return True
 
-def from_nirc2(mjds, filenames):
+def from_nirc2(mjds, nirc2_filenames, telem_dir):
     """ Gets a table of telemetry information from a set of mjds and file numbers """
     N = len(mjds) # number of data points
     # Get file numbers
-    filenums = filenames.str.extract(filenum_match, expand=False)
+    filenums = nirc2_filenames.str.extract(filenum_match, expand=False)
     filenums = filenums.str[1:] # First digit doesn't always match
     
     # Get datestrings
@@ -280,10 +280,10 @@ def from_nirc2(mjds, filenames):
         # Get filename and number
         fn, ds, mjd = filenums[i], datestrings[i], mjds[i]
         # Search for correct file
-        file_pat = filename_match.format(ds, fn)
+        file_pat = filename_match.format(telem_dir, ds, fn)
         all_files = glob.glob(file_pat, recursive=True)
         
-        # Grab the first file that matches the MJD
+        # Extract the first file that matches the MJD to data
         for file in all_files:
             success = extract_telem(file, data, i, check_mjd=mjd)
             if success: break

@@ -14,8 +14,8 @@ from . import times
 
 verbose = True
 
-data_dir = "/u/emily_ramey/work/Keck_Performance/data/"
-temp_dir = data_dir+"temp_data_2/"
+# data_dir = "/u/emily_ramey/work/Keck_Performance/data/"
+# temp_dir = data_dir+"temp_data_2/"
 
 col_dict = {
     'AO_benchT1': 'k1:ao:env:benchtemp1_Raw', # k2ENV
@@ -36,29 +36,29 @@ col_dict = {
     "k2:ao:env:LSenctemp_Raw": "LGS_enclosure_temp"
 }
 
-file_pats = { # File name patterns
-#     'k1AOfiles': temp_dir+"k1AOtemps/*/*/*/AO_bench_temps.log",
-#     'k1LTAfiles': temp_dir+"k1LTAtemps/*/*/*/LTA_temps.log",
-#     'k1ENVfiles': temp_dir+"k1envMet/*/*/*/envMet.arT",
-    'k2AO': temp_dir+"k2AOtemps/*/*/*/AO_temps.log",
-    'k2L4': temp_dir+"k2L4temps/*/*/*/L4_env.log",
-    'k2ENV': temp_dir+"k2envMet/*/*/*/envMet.arT",
-}
+# file_pats = { # File name patterns
+# #     'k1AOfiles': temp_dir+"k1AOtemps/*/*/*/AO_bench_temps.log",
+# #     'k1LTAfiles': temp_dir+"k1LTAtemps/*/*/*/LTA_temps.log",
+# #     'k1ENVfiles': temp_dir+"k1envMet/*/*/*/envMet.arT",
+#     'k2AO': temp_dir+"k2AOtemps/*/*/*/AO_temps.log",
+#     'k2L4': temp_dir+"k2L4temps/*/*/*/L4_env.log",
+#     'k2ENV': temp_dir+"k2envMet/*/*/*/envMet.arT",
+# }
 
 data_types = {
     'k2AO': {
-        'file_pat': temp_dir+"k2AOtemps/{}/AO_temps.log",
+        'file_pat': "{}{}/AO_temps.log",
         'cols': ['AOA_camT', 'DM_rackT', 'El_roomT', 'KCAM_T1', 
                  'KCAM_T2', 'OB_leftT', 'OB_rightT', 'photometricT', 
                  'k2AO_mjd'],
     },
     'k2L4': {
-        'file_pat': temp_dir+"k2L4temps/{}/L4_env.log",
+        'file_pat': "{}/{}/L4_env.log",
         'cols': ['LGS_enclosure_hum', 'LGS_enclosure_temp', 'LGS_humidity',
                  'LGS_temp', 'k2L4_mjd'],
     },
     'k2ENV': {
-        'file_pat': temp_dir+"k2envMet/{}/envMet.arT",
+        'file_pat': "{}/{}/envMet.arT",
         'cols': ['k0:met:dewpointMax', 'k0:met:dewpointMin', 'k0:met:dewpointRaw', 
                  'k0:met:humidityRaw', 'k0:met:humidityStats', 'k0:met:out:windDirection',
                  'k0:met:out:windDirectionMax', 'k0:met:out:windDirectionMin', 
@@ -104,16 +104,17 @@ def get_columns():
     return all_data
 
 
-def search_files(file_pats=file_pats):
-    """ Finds all filenames matching the given file patterns """
-    all_filenames = {}
-    for name, search in file_pats.items():
-        filenames = glob.glob(search, recursive=True)
-        all_filenames[name] = filenames
-        if verbose:
-            print(f"Done {name}, length: {len(filenames)}")
+# def search_files(file_pats=file_pats):
+#     """ Finds all filenames matching the given file patterns """
+#     all_filenames = {}
+#     for name, search in file_pats.items():
+        
+#         filenames = glob.glob(search, recursive=True)
+#         all_filenames[name] = filenames
+#         if verbose:
+#             print(f"Done {name}, length: {len(filenames)}")
     
-    return all_filenames
+#     return all_filenames
 
 def collect_data(data_files, col_dict=col_dict):
     """ Takes a list or dict w/lists of file names and reads them into a pandas dataframe """
@@ -226,27 +227,27 @@ def from_fits(filename, date_cols=['HST', 'UNIX'], str_cols=['k0:met:GEUnitInval
     
     return data
 
-def combine_and_save(file_pats=file_pats, location=temp_dir, filename=None):
-    """ 
-    Reads in all data matching file patterns (file_pats), combines them into one table, 
-    cleans them, and saves them to a FITS file
-    """
-    # Find all files matching pattern
-    all_filenames = search_files(file_pats)
-    # Read all data into one table (per dictionary label)
-    all_data = collect_data(all_filenames)
+# def combine_and_save(file_pats=file_pats, location=temp_dir, filename=None):
+#     """ 
+#     Reads in all data matching file patterns (file_pats), combines them into one table, 
+#     cleans them, and saves them to a FITS file
+#     """
+#     # Find all files matching pattern
+#     all_filenames = search_files(file_pats)
+#     # Read all data into one table (per dictionary label)
+#     all_data = collect_data(all_filenames)
     
-    for name, data in all_data.items():
-        data = parse_dates(data) # Parse date cols into datetimes
-        data = clean_dates(data) # Remove invalid dates
-        data = clean_data(data) # Casts other cols to numeric
-        # Save combined/cleaned data to FITS file
-        filename = location+name+".fits"
-        to_fits(data, filename)
+#     for name, data in all_data.items():
+#         data = parse_dates(data) # Parse date cols into datetimes
+#         data = clean_dates(data) # Remove invalid dates
+#         data = clean_data(data) # Casts other cols to numeric
+#         # Save combined/cleaned data to FITS file
+#         filename = location+name+".fits"
+#         to_fits(data, filename)
     
-    return
+#     return
 
-def from_mjds(mjds, dtype):
+def from_mjds(mjds, dtype, data_dir):
     """ Gets temp data of input type from the specified MJDs """
     # Get pd datetimes in HST
     dts = times.mjd_to_dt(mjds, zone='hst')
@@ -254,7 +255,7 @@ def from_mjds(mjds, dtype):
     datestrings = dts.strftime("%y/%m/%d")
     datestrings = np.unique(datestrings) # one file per date
     # Get relevant filenames
-    filenames = [data_types[dtype]['file_pat'].format(ds) for ds in datestrings]
+    filenames = [data_types[dtype]['file_pat'].format(data_dir, ds) for ds in datestrings]
     # Get data from filenames
     data = collect_data(filenames)
     
