@@ -32,32 +32,6 @@ accept_labels = ['cfht', 'mass', 'dimm', 'masspro', 'k2AO', 'k2L4', 'k2ENV', 'te
 
 default_parfile = 'keyword_defaults.yaml'
 
-def load_default_parfile():
-    """ Loads default parameter file and returns a dictionary """
-    try: # Load from templates module
-        file = pkg_resources.open_text(templates, default_parfile)
-        default_params = yaml.load(file, Loader=yaml.FullLoader)
-    except: # Raise error and request param file
-        raise ValueError("Unable to load default parameters. Please specify a parameter file.")
-    
-    return default_params
-
-def read_params(param_file):
-    """ Reads parameters from the specified file or returns default parameters """
-    if param_file is None: # load default
-        params = load_default_parfile()
-    elif isinstance(param_file, str) and os.path.exists(param_file): # Load user-specified
-        try: # Open stream and read as YAML
-            with open(param_file, 'r') as stream:
-                params = yaml.load(stream, Loader=yaml.FullLoader)
-        except: # Unable to load
-            raise ValueError(f"Failed to load {param_file}. Please check that PyYAML is installed \
-            and that the file is formatted correctly.")
-    else: # Invalid input
-        raise ValueError(f"{param_file} is not a valid parameter file.")
-    
-    return params
-
 # Shorthand / nicknames for data types
 expand = {
     'temp': ['k2AO', 'k2L4', 'k2ENV'],
@@ -88,6 +62,32 @@ def check_dtypes(data_types, file_paths):
     
     # Return cleaned list
     return new_dtypes
+
+def load_default_parfile():
+    """ Loads default parameter file and returns a dictionary """
+    try: # Load from templates module
+        file = pkg_resources.open_text(templates, default_parfile)
+        default_params = yaml.load(file, Loader=yaml.FullLoader)
+    except: # Raise error and request param file
+        raise ValueError("Unable to load default parameters. Please specify a parameter file.")
+    
+    return default_params
+
+def read_params(param_file):
+    """ Reads parameters from the specified file or returns default parameters """
+    if param_file is None: # load default
+        params = load_default_parfile()
+    elif isinstance(param_file, str) and os.path.exists(param_file): # Load user-specified
+        try: # Open stream and read as YAML
+            with open(param_file, 'r') as stream:
+                params = yaml.load(stream, Loader=yaml.FullLoader)
+        except: # Unable to load
+            raise ValueError(f"Failed to load {param_file}. Please check that PyYAML is installed \
+            and that the file is formatted correctly.")
+    else: # Invalid input
+        raise ValueError(f"{param_file} is not a valid parameter file.")
+    
+    return params
 
 #############################################
 ######## Interface with other modules #######
