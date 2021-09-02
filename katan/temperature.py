@@ -74,34 +74,34 @@ data_types = {
     }
 }
 
-def get_columns():
-    all_data = search_files()
-    for name, data_files in all_data.items():
-        columns = set()
-        for i,file in enumerate(data_files):    
-            try:
-                df = pd.read_csv(file, header=1, skiprows=[2], quoting=3, skipinitialspace=True,
-                                 na_values=['***'], error_bad_lines=False, warn_bad_lines=False,
-                                ).replace('"', regex=True)
-            except:
-                if verbose:
-                    print(f"Warning: read failed for file {file}")
-                continue
+# def get_columns():
+#     all_data = search_files()
+#     for name, data_files in all_data.items():
+#         columns = set()
+#         for i,file in enumerate(data_files):    
+#             try:
+#                 df = pd.read_csv(file, header=1, skiprows=[2], quoting=3, skipinitialspace=True,
+#                                  na_values=['***'], error_bad_lines=False, warn_bad_lines=False,
+#                                 ).replace('"', regex=True)
+#             except:
+#                 if verbose:
+#                     print(f"Warning: read failed for file {file}")
+#                 continue
 
-            if len(df.columns)==1: # no header
-                if verbose:
-                    print(f"Skipping file {file}, no header")
-                continue # skip for now
-            df.columns = [col.replace('"', '').strip() for col in df.columns]
-            if "UNIXDate" not in df.columns:
-                if verbose:
-                    print(f"Skipping file {file}, columns not as expected")
-                continue # skip for now
-            for col in df.columns:
-                columns.add(col)
-        all_data[name] = columns
+#             if len(df.columns)==1: # no header
+#                 if verbose:
+#                     print(f"Skipping file {file}, no header")
+#                 continue # skip for now
+#             df.columns = [col.replace('"', '').strip() for col in df.columns]
+#             if "UNIXDate" not in df.columns:
+#                 if verbose:
+#                     print(f"Skipping file {file}, columns not as expected")
+#                 continue # skip for now
+#             for col in df.columns:
+#                 columns.add(col)
+#         all_data[name] = columns
     
-    return all_data
+#     return all_data
 
 
 # def search_files(file_pats=file_pats):
@@ -117,7 +117,12 @@ def get_columns():
 #     return all_filenames
 
 def collect_data(data_files, col_dict=col_dict):
-    """ Takes a list or dict w/lists of file names and reads them into a pandas dataframe """
+    """ 
+    Takes a list of file names and reads them into a pandas dataframe.
+    data_files: list of filenames
+    col_dict: dictionary of columns to rename
+    returns: dataframe of temperature data from files
+    """
     if isinstance(data_files, dict): # Return dict w/dataframes
         new_files = {}
         for name, files in data_files.items():
@@ -158,7 +163,9 @@ def collect_data(data_files, col_dict=col_dict):
     return data
 
 def parse_dates(data, date_cols={'HST': ['HSTdate', 'HSTtime'], 'UNIX': ['UNIXDate', 'UNIXTime']}):
-    """ Parses specified date and time columns and returns a cleaned data table """
+    """ 
+    Parses specified date and time columns and returns a cleaned data table.
+    """
     new_data = data.copy()
     for label,cols in date_cols.items():
         date_col, time_col = cols
@@ -190,42 +197,42 @@ def clean_data(data, data_cols=None, non_numeric=['HST', 'UNIX']):
     
     return new_data
 
-def to_fits(data, filename, str_cols=['HST', 'UNIX']):
-    """ Writes a FITS file from the given temperature array """
-    fits_data = data.copy()
-    for col in ['k0:met:GEUnitInvalram', 'k0:met:GEunitSvcAlarm']:
-        if col in fits_data.columns:
-            fits_data = fits_data.drop(columns=[col])
-    for col in str_cols:
-        if col in fits_data.columns:
-            fits_data[col] = fits_data[col].astype(str)
-    # Assuming the data columns are already numeric
-    fits_data = Table.from_pandas(fits_data)
-    fits_data.write(filename)
+# def to_fits(data, filename, str_cols=['HST', 'UNIX']):
+#     """ Writes a FITS file from the given temperature array """
+#     fits_data = data.copy()
+#     for col in ['k0:met:GEUnitInvalram', 'k0:met:GEunitSvcAlarm']:
+#         if col in fits_data.columns:
+#             fits_data = fits_data.drop(columns=[col])
+#     for col in str_cols:
+#         if col in fits_data.columns:
+#             fits_data[col] = fits_data[col].astype(str)
+#     # Assuming the data columns are already numeric
+#     fits_data = Table.from_pandas(fits_data)
+#     fits_data.write(filename)
     
-    return
+#     return
 
-def from_fits(filename, date_cols=['HST', 'UNIX'], str_cols=['k0:met:GEUnitInvalram', 'k0:met:GEunitSvcAlarm']):
-    """ Reads in a fits file, converts to pandas, and parses date columns (if specified) """
-    data = Table.read(filename).to_pandas()
+# def from_fits(filename, date_cols=['HST', 'UNIX'], str_cols=['k0:met:GEUnitInvalram', 'k0:met:GEunitSvcAlarm']):
+#     """ Reads in a fits file, converts to pandas, and parses date columns (if specified) """
+#     data = Table.read(filename).to_pandas()
     
-    # Fix NaNs, because astropy is dumb sometimes
-    data[data==1e+20] = np.nan
+#     # Fix NaNs, because astropy is dumb sometimes
+#     data[data==1e+20] = np.nan
     
-    if date_cols is None: return data
+#     if date_cols is None: return data
     
-    for col in date_cols:
-        if isinstance(data[col][0], bytes): # Cast bytes to utf-8 strings
-            data[col] = data[col].str.decode("utf-8")
-        data[col] = pd.to_datetime(data[col], exact=False, errors='coerce')
+#     for col in date_cols:
+#         if isinstance(data[col][0], bytes): # Cast bytes to utf-8 strings
+#             data[col] = data[col].str.decode("utf-8")
+#         data[col] = pd.to_datetime(data[col], exact=False, errors='coerce')
     
-    if str_cols is None: return data
+#     if str_cols is None: return data
     
-    for col in str_cols:
-        if col in data.columns and isinstance(data[col][0], bytes):
-            data[col] = data[col].str.decode("utf-8")
+#     for col in str_cols:
+#         if col in data.columns and isinstance(data[col][0], bytes):
+#             data[col] = data[col].str.decode("utf-8")
     
-    return data
+#     return data
 
 # def combine_and_save(file_pats=file_pats, location=temp_dir, filename=None):
 #     """ 
@@ -248,7 +255,13 @@ def from_fits(filename, date_cols=['HST', 'UNIX'], str_cols=['k0:met:GEUnitInval
 #     return
 
 def from_mjds(mjds, dtype, data_dir):
-    """ Gets temp data of input type from the specified MJDs """
+    """ 
+    Gets temp data of input type from the specified MJDs.
+    mjds: list of Modified Julian Dates to pull data from
+    dtype: k2AO, k2L4, or k2ENV file type
+    data_dir: path to directory containing temperature data
+    returns: dataframe of relevant temperature data
+    """
     # Get pd datetimes in HST
     dts = times.mjd_to_dt(mjds, zone='hst')
     # Format list
@@ -273,6 +286,3 @@ def from_mjds(mjds, dtype, data_dir):
              inplace=True, errors='ignore')
     
     return data
-    
-if __name__=='__main__':
-    pass

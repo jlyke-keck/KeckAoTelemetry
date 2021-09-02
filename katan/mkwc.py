@@ -10,12 +10,10 @@ from . import times
 ### NOTE: Seeing data is STORED by UT, with data in HST
 ### CFHT data is STORED by HST, with data in HST
 
-# cfht_dir = "/u/emily_ramey/work/Keck_Performance/data/weather_data/"
 mkwc_url = 'http://mkwc.ifa.hawaii.edu/'
 year_url = mkwc_url+'archive/wx/cfht/cfht-wx.{}.dat'
+# Cutoff for daily-vs-yearly CFHT files on MKWC website
 cfht_cutoff = 55927.41666667 # 01/01/2012 12:00 am HST
-
-# seeing_dir = "/u/emily_ramey/work/Keck_Performance/data/seeing_data"
 
 # Time columns from MKWC data
 time_cols = ['year', 'month', 'day', 'hour', 'minute', 'second']
@@ -63,8 +61,10 @@ for dtype in data_types:
 
 def cfht_from_year(datestrings, year):
     """ 
-    Gets pre-2012 MKWC data from the year-long file 
-    instead of the by-date files 
+    Gets pre-2012 MKWC data from the year-long file instead of the by-date files.
+    datestrings: dates to pull data from, as {yyyymmdd} strings
+    year: the year to pull datestring data from
+    returns: dataframe with cfht data from requested dates
     """
     # Get year-long file URL
     url = year_url.format(year)
@@ -94,7 +94,11 @@ def cfht_from_year(datestrings, year):
     return pd.concat(all_data)
 
 def format_columns(df, dtype):
-    """ Changes columns (in place) from time_cols to MJD """
+    """ 
+    Changes columns (in place) from date/time to MJD.
+    df: MKWC dataframe with date and time columns
+    dtype: specific data type (mass, dimm, masspro, cfht)
+    """
     # Get MJDs from HST values
     mjds = times.table_to_mjd(df, columns=time_cols, zone='hst')
     df[dtype+'_mjd'] = mjds
@@ -103,7 +107,12 @@ def format_columns(df, dtype):
     df.drop(columns=time_cols, inplace=True, errors='ignore')
 
 def from_url(datestring, dtype):
-    """ Pulls cfht or seeing file from MKWC website """
+    """ 
+    Pulls weather or seeing file from MKWC website.
+    datestring: date to pull data for, in {yyyymmdd} format
+    dtype: cfht, mass, dimm, or masspro
+    returns: dataframe with MKWC data
+    """
     # Format URL
     url = data_types[dtype]['web_pat'].format(datestring)
     
@@ -121,7 +130,9 @@ def from_url(datestring, dtype):
     return df
 
 def from_file(filename, dtype, data_dir='./'):
-    """ Pulls cfht or seeing file from local directory """
+    """ 
+    Pulls weather or seeing file from local directory
+    """
     # Read in CSV
     df = pd.read_csv(filename)
 
@@ -139,7 +150,10 @@ def from_file(filename, dtype, data_dir='./'):
 def from_nirc2(mjds, dtype, data_dir='./'):
     """ 
     Compiles a list of cfht or seeing observations based on MJDs
-    note: does not compare MJDs; assumption is inputs are rounded to nearest day
+    mjds: list of NIRC2 MJDs to pull data from (assumes one per day)
+    dtype: cfht, mass, dimm, or masspro
+    data_dir: location of downloaded weather/seeing files, if applicable
+    returns: dataframe containing all data from MJDs specified
     """
     
     # Get datestrings

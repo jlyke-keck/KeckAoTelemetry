@@ -16,8 +16,11 @@ default_keys = ['AIRMASS', 'ITIME', 'COADDS', 'FWINAME', 'AZ', 'DMGAIN', 'DTGAIN
 
 def from_filename(nirc2_file, data, i, header_kws):
     """ 
-    Gets nirc2 header values from a filename as dict 
-    or loads values into specified df
+    Gets nirc2 header values from a filename and loads values (in place) into data.
+    nirc2_file: string, path to nirc2 file to load
+    data: partially filled dataframe (line i will be overwritten)
+    i: index at which to load NIRC2 data
+    header_kws: header keywords to load into data
     """
     # Check for valid file
     if not os.path.isfile(nirc2_file):
@@ -32,7 +35,12 @@ def from_filename(nirc2_file, data, i, header_kws):
         data.loc[i,kw.lower()] = nirc2_hdr.get(kw, np.nan)
 
 def from_strehl(strehl_file, header_kws=default_keys):
-    """ Gets NIRC2 header data based on contents of Strehl file """
+    """ 
+    Gets NIRC2 header data based on contents of a Strehl file.
+    strehl_file: string, path to Strehl file
+    header_kws: header keywords to pull from NIRC2 data files
+    returns: dataframe with Strehl and NIRC2 data
+    """
     # Get directory name
     data_dir = os.path.dirname(strehl_file)
     # Retrieve Strehl data

@@ -13,14 +13,13 @@ import numpy as np
 import pandas as pd
 import os
 
-# Check dependencies
+# Check whether PyYAML is installed
 try:
     import yaml
 except:
     raise ValueError("PyYAML not installed. Please install from https://anaconda.org/anaconda/pyyaml")
 
-### For importing package files
-### Note: may need to edit this later if there are import issues with Py<37
+### Use importlib for package resources
 try:
     import importlib.resources as pkg_resources
 except ImportError:
@@ -30,6 +29,7 @@ except ImportError:
 # All data types that can be compiled by this package
 accept_labels = ['cfht', 'mass', 'dimm', 'masspro', 'k2AO', 'k2L4', 'k2ENV', 'telem']
 
+# Default parameter file for data keywords
 default_parfile = 'keyword_defaults.yaml'
 
 # Shorthand / nicknames for data types
@@ -43,7 +43,12 @@ expand = {
 
 # Utility functions
 def check_dtypes(data_types, file_paths):
-    """ Returns an expanded / cleaned list of data types from user input """
+    """ 
+    Checks user-input data types and file paths and re-formats if necessary.
+    data_types: list of data types or combined types
+    file_paths: dictionary with data_type: file_path pairs
+    returns: list of properly formatted data types
+    """
     new_dtypes = []
     
     # Edge case: only temperature dir specified
@@ -64,7 +69,10 @@ def check_dtypes(data_types, file_paths):
     return new_dtypes
 
 def load_default_parfile():
-    """ Loads default parameter file and returns a dictionary """
+    """ 
+    Loads default parameter file from package.
+    returns: dictionary of dtypes, with sub-dictionaries of data labels:bool/string
+    """
     try: # Load from templates module
         file = pkg_resources.open_text(templates, default_parfile)
         default_params = yaml.load(file, Loader=yaml.FullLoader)
@@ -74,7 +82,11 @@ def load_default_parfile():
     return default_params
 
 def read_params(param_file):
-    """ Reads parameters from the specified file or returns default parameters """
+    """ 
+    Reads parameters from the specified file or returns default parameters if no file is specified.
+    param_file: path to parameter file, as a string, or None to return default
+    returns: dictionary of dtypes, with sub-dictionaries of data labels:bool/string
+    """
     if param_file is None: # load default
         params = load_default_parfile()
     elif isinstance(param_file, str) and os.path.exists(param_file): # Load user-specified
@@ -101,19 +113,24 @@ def data_func(dtype, data_dir=None):
     Returns the function to get data for the specified dtype 
     and whether data needs to be matched to nirc2 mjds
     """
-    if dtype in ['cfht']+expand['seeing']: # MKWC
+    # MKWC seeing (mass, dimm, masspro) or weather (cfht) files
+    if dtype in ['cfht']+expand['seeing']:
         return lambda files,mjds: mkwc.from_nirc2(mjds, dtype, data_dir), True
-    if dtype in expand['temp']: # Temperature
+    # Temperature files (k2AO, k2L4, or k2ENV)
+    if dtype in expand['temp']:
         return lambda files,mjds: temp.from_mjds(mjds, dtype, data_dir), True
-    if dtype=='telem': # Telemetry
+    # Telemetry files (matched to NIRC2 filenames)
+    if dtype=='telem':
         return lambda files,mjds: telem.from_nirc2(mjds, files, data_dir), False
 
 def change_cols(data, params):
     """
     Changes / filters columns according to the parameters passed.
-    A False entry means the column will be omitted
-    A True entry means the column will be included as-is
-    A string entry means the column will be re-named
+    data: a dataframe with columns for a certain dtype
+    params: a list of column names to values
+        A False value means the column will be omitted
+        A True value means the column will be included as-is
+        A string value means the column will be re-named to that value
     """
     # Drop bad columns first
     good_cols = [col for col,val in params.items() if (val and col in data.columns)]
@@ -131,8 +148,10 @@ def change_cols(data, params):
 
 def match_data(mjd1, mjd2):
     """ 
-    Matches data1 with its closest points in data2, by mjd values
-    Returns an array containing data1 with corresponding rows from data2
+    Matches secondary MJD values to those of their closest primary observations.
+    mjd1: Nx1 array/series of primary MJDs
+    mjd2: Mx1 array/series of secondary MJDs
+    returns: Nx1 array of indices in mjd2 which best match entries of mjd1
     """
     # Edge case
     if mjd1.empty or mjd2.empty:
@@ -160,6 +179,13 @@ def combine_strehl(strehl_file, data_types, file_paths={}, test=False,
     """ 
     Combines and matches data from a certain Strehl file with other specified data types.
     NIRC2 files must be in the same directory as the Strehl file.
+    strehl_file: a string containing the file path for a Strehl file
+    data_types: a list of data types to match with the Strehl file
+    file_paths: a dictionary mapping data types to file paths for the relevant data
+    test: bool, if True the compiler will match only the first 3 lines of the Strehl file
+    param_file: string, path to a parameter file (see templates/keyword_defaults.yaml)
+                if None, default parameters will be used
+    returns: a fully matched dataset with Strehl, NIRC2, and other secondary data
     """
     ### Check file paths parameter dict, load if yaml
     if not isinstance(file_paths, dict) and os.path.isfile(file_paths):

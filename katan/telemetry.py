@@ -25,7 +25,8 @@ except ImportError:
 wfs_file = "sub_ap_map.txt"
 act_file = "act.txt"
 
-filenum_match = ".*c(\d+).fits" # regex to match telem filenumbers
+# regex to match telem filenumbers
+filenum_match = ".*c(\d+).fits"
 filename_match = "{}{}/**/n?{}*LGS*.sav"
 
 TIME_DELTA = 0.001 # About 100 seconds in mjd
@@ -59,7 +60,7 @@ def get_times(telem_data, start=None):
 
 def resid_mask(ints, wfs_map=read_map(wfs_file), act_map=read_map(act_file), num_aps=236):
     """
-    Return the locations of the valid actuators in the actuator array
+    Returns the locations of the valid actuators in the actuator array
     resids: Nx349 residual wavefront array (microns)
     ints: Nx304 intensity array (any units)
     N: Number of timestamps
@@ -89,92 +90,6 @@ def resid_mask(ints, wfs_map=read_map(wfs_file), act_map=read_map(act_file), num
                  | good_acts[:-1,:-1] | good_acts[:-1,1:]) * act_map
     
     return good_acts
-
-# def wfs_error2(resids, ints, wfs_map=read_map(wfs_file), act_map=read_map(act_file)):
-#     """ Calculates the variance in the wavefront (microns^2) produced by the WFS """
-#     # Get residual mask for brightest sub-aps
-#     rmask =  resid_mask(resids, ints)
-    
-#     # Square residuals
-#     sig2_resid = np.mean(resids**2, axis=0)
-#     # Load into actuator grid
-#     resid_grid = act_map.astype(float)
-#     resid_grid[np.where(resid_grid==1)] = sig2_resid
-    
-#     # Mask out actuators next to dimmer apertures
-#     sig2_masked = resid_grid * rmask
-#     # Sum values and return
-#     return np.sum(sig2_masked)
-
-# def tt_error2(tt_resids): ### TODO: fix this so it's not unitless
-#     """ Calculate mean tip-tilt residual variance in microns """
-#     wvln = 0.658 # wavelength (microns)
-#     D = 10.5 * 1e6 # telescope diameter (microns)
-    
-#     # Magnitude of residuals
-#     sig_alpha2 = (tt_resids[:,0] + tt_resids[:,1])**2 # x + y TT residual variance
-#     sig_w2 = (np.pi*D/wvln/2.0)**2 * sig_alpha2 # TT resids in microns^2
-    
-#     return np.mean(sig_w2)
-
-# def total_WFE(telem_data):
-#     resids = telem_data.a.residualwavefront[0][:, :RESID_CUTOFF] * 0.6 # WFS resids, microns, Nx349
-#     ints = telem_data.a.subapintensity[0] # Sub-ap intensities, Nx304
-#     tt_resids = telem_data.a.residualwavefront[0][:, TT_IDXS] * np.pi / (180*3600) # TT resids, radians, Nx2
-#     defocus = [0] #telem_data.a.residualwavefront[0][:, DEFOCUS] # Defocus resids, microns, Nx1
-    
-#     return wfs_error2(resids, ints) + tt_error2(tt_resids) + np.mean(defocus**2)
-
-# def mask_residuals_old(telem_data, num_aps=236, wfs_file=wfs_file, act_file=act_file):
-#     """ Really freakin complicated array logic to mask out all invalid actuators """
-#     # Get data
-#     resids = telem_data.a.residualwavefront[0][:, :349]*0.6 # microns
-#     intensities = telem_data.a.subapintensity[0] # ADU
-#     N = intensities.shape[0]
-#     # Get hardware maps
-#     wfs_map = read_map(wfs_file)
-#     act_map = read_map(act_file)
-    
-#     # Get X and Y values of sub-aps and replicate them for all timestamps
-#     wfs_x, wfs_y = np.where(wfs_map==1)
-#     wfs_x, wfs_y = np.tile(wfs_x, (N,1)), np.tile(wfs_y, (N,1))
-    
-#     # Get valid indices for each timestep
-#     idxs = np.flip(np.argsort(intensities, axis=1), axis=1)[:,:num_aps]
-#     valid_x = np.take_along_axis(wfs_x, idxs, axis=1)
-#     valid_y = np.take_along_axis(wfs_y, idxs, axis=1)
-#     valid_z = np.tile(np.arange(N), (num_aps,1)).T
-    
-#     # Put 1s at each valid index
-#     valid_saps = np.zeros((N, 20, 20), int)
-#     valid_saps[valid_z, valid_x, valid_y] = 1 # TODO: flip this back
-#     # Pad each sheet (timestamp) with zeros at the edges
-#     check = valid_saps.reshape(N, 20*20).sum(axis=1)
-#     if any(check!=236):
-#         print("Shape mismatch in valid sub-ap array")
-#     valid_saps = np.pad(valid_saps, ((0,0),(1,1),(1,1)))
-    
-#     # Get (potentially)valid actuators for sub-aps
-#     valid_acts = (valid_saps[:,1:,1:]|valid_saps[:,1:,:-1]|
-#                   valid_saps[:,:-1,:-1]|valid_saps[:,:-1,1:]) # 4 corners of sub-aps
-#     # Multiply by actuator map to remove any non-actuator positions
-#     valid_acts = valid_acts * np.tile(act_map, (N,1,1))
-    
-#     # Get number of valid actuators in each frame (can vary due to edge cases)
-#     valid_act_nums = valid_acts.reshape(N,21*21).sum(axis=1)
-    
-#     # Map residuals to actuator positions
-#     resid_vals = np.tile(act_map, (N,1,1)).astype(float)
-#     resid_vals[np.where(resid_vals==1)] = resids.flatten()
-    
-#     # Mask out invalid actuators
-#     valid_acts = valid_acts * resid_vals
-#     rms_resids = valid_acts.reshape(N, 21*21)
-    
-#     # Take the RMS residual for each frame
-#     rms_resids = np.sqrt((rms_resids**2).sum(axis=1)/valid_act_nums)
-    
-#     return rms_resids
 
 def tt2um(tt_as):
     """ Calculates TT residuals in microns from tt_x and tt_y in arcsec """
@@ -206,10 +121,12 @@ def rms_acts(act_resids, ints):
 ######### Processing Files #############
 ########################################
 
-# Do some telemetry files need to be cropped around the observation?
-
 def get_mjd(telem):
-    """ Validates a telemetry file against an MJD value """
+    """ 
+    Validates a telemetry file against an MJD value.
+    telem: structure returned from readsav
+    returns: MJD of telemetry file start
+    """
     # Get timestamp
     tstamp = telem.tstamp_str_start.decode('utf-8')
     # Convert to MJD
@@ -219,7 +136,13 @@ def get_mjd(telem):
     return telem_mjd
 
 def extract_telem(file, data, idx, check_mjd=None):
-    """ Extracts telemetry values from a file to a dataframe """
+    """ 
+    Extracts telemetry values from a file to a dataframe.
+    file: file path to telemetry, as string
+    data: dataframe to load new telemetry into
+    idx: index in dataframe receive new telemetry data
+    check_mjd: MJD to match with telemetry file (no matching if none)
+    """
     # Read IDL file
     telem = readsav(file)
     
@@ -262,7 +185,13 @@ def extract_telem(file, data, idx, check_mjd=None):
     return True
 
 def from_nirc2(mjds, nirc2_filenames, telem_dir):
-    """ Gets a table of telemetry information from a set of mjds and file numbers """
+    """ 
+    Gets a table of telemetry information from a set of mjds and NIRC2 filenames.
+    mjds: NIRC2 mjds to match to telemetry files
+    nirc2_filenames: NIRC2 filenames to match to telemetry files
+    telem_dir: path to directory containing telemetry files
+    returns: dataframe of telemetry, in same order as NIRC2 MJDs passed
+    """
     N = len(mjds) # number of data points
     # Get file numbers
     filenums = nirc2_filenames.str.extract(filenum_match, expand=False)

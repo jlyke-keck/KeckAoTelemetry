@@ -15,7 +15,12 @@ hst = tz.timezone('US/Hawaii')
 
 ### Conversion / utility functions
 def mjd_to_dt(mjds, zone='utc'):
-    """ Converts Modified Julian Date(s) to HST or UTC date(s) """
+    """ 
+    Converts MJDs to HST or UTC date.
+    mjds: list or series of Modified Julian Dates
+    zone: time zone ('utc' or 'hst') to return
+    returns: datetime objects in the given time zone
+    """
     # Convert mjds -> astropy times -> datetimes
     dts = Time(mjds, format='mjd', scale='utc').to_datetime()
     # Convert to pandas
@@ -25,7 +30,13 @@ def mjd_to_dt(mjds, zone='utc'):
     return dts
 
 def table_to_mjd(table, columns, zone='utc'):
-    """ Converts date and time columns to mjds """
+    """ 
+    Converts any date and time columns in a table to mjds.
+    table: dataframe containing dates and times
+    columns: date or time column labels
+    zone: time zone of the dates/times
+    returns: Modified Julian Dates of the dates/times in table
+    """
     # Safety check for list of columns
     if not isinstance(columns, str):
         columns = [col for col in columns if col in table.columns]
@@ -45,12 +56,21 @@ def table_to_mjd(table, columns, zone='utc'):
     return np.ma.getdata(times.mjd)
 
 def str_to_mjd(datestrings, fmt):
-    """ Converts astropy-formatted date/time strings (in UTC) to MJD values """
+    """ 
+    Converts astropy-formatted date/time strings (in UTC) to MJD values.
+    datestrings: dates to convert, as strings
+    fmt: format specifier for the input datestrings
+    returns: an array of MJDs for the given datestrings
+    """
     # Get astropy times
     times = Time(datestrings, format=fmt, scale='utc')
     # Convert to mjd
     return times.mjd
 
 def mjd_to_yr(mjds):
-    """ Converts MJD to Decimal Year """
+    """ 
+    Converts MJD to Decimal Year.
+    mjds: a list or series of Modified Julian Dates
+    returns: decimal years correpsonding to the given MJDs
+    """
     return Time(mjds, format='mjd', scale='utc').decimalyear 
