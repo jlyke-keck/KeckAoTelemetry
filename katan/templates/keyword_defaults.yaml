@@ -1,0 +1,127 @@
+### This is the default YAML file for the KATAN compiler
+### Note: columns are not in the order they are read in from data
+### Change 'True' to an alias for the column, if desired, or set to False to exclude
+
+---
+### Strehl file columns
+strehl:
+    'nirc2_mjd': True # required
+    'nirc2_file': True
+    'strehl': True
+    'rms_err': True
+    'fwhm': True
+
+### NIRC2 file columns
+nirc2:
+    'AIRMASS': 'airmass'
+    'ITIME': 'itime'
+    'COADDS': 'coadds'
+    'FWINAME': 'fwiname'
+    'AZ': 'az'
+    'DMGAIN': 'dmgain'
+    'DTGAIN': 'dtgain'
+    'AOLBFWHM': 'aolbfwhm'
+    'WSFRRT': 'wsfrrt'
+    'LSAMPPWR': 'lsamppwr'
+    'LGRMSWF': 'lgrmswf'
+    'AOAOAMED': 'aoaomed'
+    'TUBETEMP': 'tubetemp'
+
+### Telemetry file columns
+telem:
+    'telem_file': True
+    'telem_mjd': True # required
+    'TT_mean': True
+    'TT_std': True
+    'DM_mean': True
+    'DM_std': True
+    'rmswfe_mean': True
+    'rmswfe_std': True
+    'strehl_telem': True
+
+### Weather file columns
+cfht:
+    'cfht_mjd': True # required
+    'wind_speed': True
+    'wind_direction': True
+    'temperature': True
+    'relative_humidity': True
+    'pressure': True
+
+### MASS seeing columns
+mass:
+    'mass_mjd': True # required
+    'mass': True
+
+### DIMM seeing columns
+dimm:
+    'dimm_mjd': True # required
+    'dimm': True
+
+### MASSPRO seeing columns
+masspro:
+    'masspro_mjd': True # required
+    'masspro': True
+    'masspro_half': True
+    'masspro_1': True
+    'masspro_2': True
+    'masspro_4': True
+    'masspro_8': True
+    'masspro_16': True
+
+### k2AO temperature columns
+k2AO:
+    'k2AO_mjd': True # required
+    'AOA_camT': True
+    'DM_rackT': False
+    'El_roomT': False
+    'KCAM_T1': False
+    'KCAM_T2': False
+    'OB_leftT': "k2ao_nirc2_temp"
+    'OB_rightT': "k2ao_wfs_temp"
+    'photometricT': True
+
+### k2L4 temperature columns
+k2L4:
+    'k2L4_mjd': True # required
+    'LGS_enclosure_hum': False
+    'LGS_enclosure_temp': True
+    'LGS_humidity': False
+    'LGS_temp': True
+
+### k2ENV temperature columns
+k2ENV:
+    'k2ENV_mjd': True # required
+    'k0:met:dewpointMax': False
+    'k0:met:dewpointMin': False
+    'k0:met:dewpointRaw': False
+    'k0:met:humidityRaw': "k0_humidity"
+    'k0:met:humidityStats': False
+    'k0:met:out:windDirection': "k0_wind_dir"
+    'k0:met:out:windDirectionMax': False
+    'k0:met:out:windDirectionMin': False
+    'k0:met:out:windSpeedMaxStats': False
+    'k0:met:out:windSpeedMaxmph': False
+    'k0:met:out:windSpeedmph': "k0_wind_speed"
+    'k0:met:outTempDwptDiff': False
+    'k0:met:pressureRaw': "k0_pressure"
+    'k0:met:pressureStats': False
+    'k0:met:tempMax': False
+    'k0:met:tempMin': False
+    'k0:met:tempRaw': "k0_temperature"
+    'k2:dcs:sec:acsDwptDiff': False
+    'k2:dcs:sec:acsTemp': "k2_primary_temp"
+    'k2:dcs:sec:secDwptDiff': False
+    'k2:dcs:sec:secondaryTemp': "k2_secondary_temp"
+    'k2:met:humidityRaw': "k2_dome_humidity"
+    'k2:met:humidityStats': False
+    'k2:met:tempRaw': "k2_dome_temp"
+    'k2:met:tempStats': False
+    'k2:met:windAzRaw': False
+    'k2:met:windElRaw': False
+    'k2:met:windSpeedMaxmph': False
+    'k2:met:windSpeedMinmph': False
+    'k2:met:windSpeedRaw': False # investigate
+    'k2:met:windSpeedStats': False
+    'k2:met:windSpeedmph': False
+...
